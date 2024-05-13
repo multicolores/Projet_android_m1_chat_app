@@ -29,6 +29,8 @@ public class MapActivity extends AppCompatActivity {
             return insets;
         });
 
+        Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
+
         setupMap();
     }
 

@@ -4,27 +4,22 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-
-import org.osmdroid.config.Configuration;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.util.GeoPoint;
-import org.osmdroid.views.MapView;
 
 import android.view.View;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-
-import org.osmdroid.views.overlay.Marker;
 
 import android.content.Intent;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.location.LocationManager;
@@ -33,8 +28,8 @@ import android.Manifest;
 import android.widget.Toast;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity implements LocationListener {
     private static final int PERMISSION_REQUEST_CODE = 100;
@@ -50,8 +45,34 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         this.BDD = FirebaseFirestore.getInstance();
+        Button SignIn = findViewById(R.id.Button_signin);
 
+        SignIn.setOnClickListener(View -> {
+            EditText TextNom = findViewById(R.id.input_name);
+            String Nom = TextNom.getText().toString();
 
+            EditText TextMdp = findViewById(R.id.input_mdp);
+            String Mdp = TextMdp.getText().toString();
+
+            if (Nom.isEmpty() || Mdp.isEmpty()) {
+                Toast.makeText(this, "Remplissez le Nom et Mot de passe", Toast.LENGTH_SHORT).show();
+            } else {
+                Map<String, Object> Connexion = new HashMap<>();
+                Connexion.put("Nom", Nom);
+                Connexion.put("MotDePasse", Mdp);
+
+                this.BDD
+                        .collection("Compte")
+                        .document(Nom)
+                        .set(Connexion)
+                        .addOnSuccessListener(unused -> {
+                            Toast.makeText(this, "Succes ", Toast.LENGTH_LONG).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(this, "Echec ", Toast.LENGTH_LONG).show();
+                        });
+            }
+        });
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         // Check if permissions are valids
@@ -69,12 +90,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 500, this);
     }
 
-
-
     public void onClickGoMapPage(View view) {
         startActivity(new Intent(this, MapActivity.class));
     }
-
 
     @Override
     public void onFlushComplete(int requestCode) {
@@ -103,7 +121,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
         this.textView=findViewById(R.id.textView_location_info);
         this.textView.setText("Latitude: " + latitude + "\nLongitude: " + longitude);
-        Toast.makeText(this, "Latitude: " + latitude + "\nLongitude: " + longitude, Toast.LENGTH_SHORT).show();
     }
 
     // Other LocationListener methods
@@ -121,21 +138,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         super.onPointerCaptureChanged(hasCapture);
     }
 
-    public void OnClickSignIn(View view) {
-        Map<String, Object> Connexion = new HashMap<>();
-        EditText TextNom = findViewById(R.id.input_name);
-        String Nom = TextNom.getText().toString();
-
-        EditText TextMdp = findViewById(R.id.input_name);
-        String Mdp = TextMdp.getText().toString();
-
-        Connexion.put(Nom, Mdp);
-
-        this.BDD
-                .collection("Compte")
-                .add(Connexion)
-                .addOnCompleteListener(task -> {
-                    Toast.makeText(this, "Succes : " + task.isSuccessful(), Toast.LENGTH_LONG).show();
-                });
+    public void onClickSignupPage(View view) {
+        Intent intentSingUp = new Intent(this, SignupActivity.class);
+        intentSingUp.putExtra("Latitude", latitude);
+        intentSingUp.putExtra("Longitude", longitude);
+        startActivity(intentSingUp);
     }
 }

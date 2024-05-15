@@ -22,6 +22,7 @@ public class MapActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         EdgeToEdge.enable(this);
+        Configuration.getInstance().load(getApplicationContext(), PreferenceManager.getDefaultSharedPreferences(getApplicationContext()));
         setContentView(R.layout.activity_map);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.map), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -29,7 +30,8 @@ public class MapActivity extends AppCompatActivity {
             return insets;
         });
 
-        Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
+       //Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
+
 
         setupMap();
     }

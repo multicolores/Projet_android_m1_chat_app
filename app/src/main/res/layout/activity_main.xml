@@ -5,56 +5,107 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_gravity="center_vertical"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/button"
+    <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:onClick="onClickGoMapPage"
-        android:text="See map of user positions"
-        app:layout_constraintStart_toStartOf="@+id/button2"
-        app:layout_constraintTop_toBottomOf="@+id/button2" />
-
-    <Button
-        android:id="@+id/button2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="29dp"
-        android:text="Chat with someone"
-        app:layout_constraintStart_toStartOf="@+id/textView3"
-        app:layout_constraintTop_toBottomOf="@+id/textView3" />
-
-    <TextView
-        android:id="@+id/textView3"
-        android:layout_width="190dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="21dp"
-        android:text="Your application to chat with other people and find their locations !"
-        app:layout_constraintStart_toStartOf="@+id/textView2"
-        app:layout_constraintTop_toBottomOf="@+id/textView2" />
-
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="68dp"
-        android:layout_marginTop="168dp"
-        android:fontWeight="700"
-        android:text="Chat App"
-        android:textSize="40sp"
+        android:gravity="center_horizontal|center_vertical"
+        android:orientation="vertical"
+        android:paddingLeft="85sp"
+        android:paddingTop="200sp"
+        android:paddingRight="85sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <TextView
-        android:id="@+id/textView_location_info"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="83dp"
-        android:layout_marginBottom="165dp"
-        android:text="TextView"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        <TextView
+            android:id="@+id/textView_NameApp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontWeight="700"
+            android:text="Location App"
+            android:textColor="#002379"
+            android:textSize="40sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textView_DescriptionApp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="60sp"
+            android:text="The app to locate your friends !" />
+
+        <EditText
+            android:id="@+id/input_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20sp"
+            android:background="#ECECEC"
+            android:backgroundTintMode="add"
+            android:ems="10"
+            android:hint="Nom"
+            android:inputType="text"
+            android:paddingStart="15sp"
+            android:paddingTop="10sp"
+            android:paddingBottom="10sp" />
+
+        <EditText
+            android:id="@+id/input_mdp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="45sp"
+            android:background="#ECECEC"
+            android:ems="10"
+            android:hint="Mot de passe"
+            android:inputType="text|textPassword"
+            android:paddingStart="15sp"
+            android:paddingTop="10sp"
+            android:paddingBottom="10sp" />
+
+        <Button
+            android:id="@+id/Button_signin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#002379"
+            android:onClick="OnClickSignIn"
+            android:paddingLeft="50sp"
+            android:paddingRight="50sp"
+            android:text="Sign in" />
+
+        <TextView
+            android:id="@+id/textView_NewAccount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="100sp"
+            android:gravity="center_horizontal"
+            android:text="Create new account"
+            android:textColorHint="#002379"
+            android:textColorLink="#002379"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textView_VotrePosition"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10sp"
+            android:text="Votre potition actuelle :" />
+
+        <TextView
+            android:id="@+id/textView_location_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20sp"
+            android:hint="Position" />
+
+        <Button
+            android:id="@+id/button_map"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="onClickGoMapPage"
+            android:text="See map of user positions" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

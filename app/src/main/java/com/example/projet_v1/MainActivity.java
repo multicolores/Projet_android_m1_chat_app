@@ -12,6 +12,7 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 
 import android.view.View;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -24,13 +25,16 @@ import androidx.core.view.WindowInsetsCompat;
 import org.osmdroid.views.overlay.Marker;
 
 import android.content.Intent;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.location.LocationManager;
 import android.location.LocationListener;
 import android.Manifest;
 import android.widget.Toast;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements LocationListener {
     private static final int PERMISSION_REQUEST_CODE = 100;
@@ -39,11 +43,14 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private double latitude;
     private double longitude;
     private LocationManager locationManager;
+    private FirebaseFirestore BDD;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        this.BDD = FirebaseFirestore.getInstance();
+
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -61,6 +68,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         // Get device location
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 500, this);
     }
+
+
 
     public void onClickGoMapPage(View view) {
         startActivity(new Intent(this, MapActivity.class));
@@ -110,5 +119,23 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
         super.onPointerCaptureChanged(hasCapture);
+    }
+
+    public void OnClickSignIn(View view) {
+        Map<String, Object> Connexion = new HashMap<>();
+        EditText TextNom = findViewById(R.id.input_name);
+        String Nom = TextNom.getText().toString();
+
+        EditText TextMdp = findViewById(R.id.input_name);
+        String Mdp = TextMdp.getText().toString();
+
+        Connexion.put(Nom, Mdp);
+
+        this.BDD
+                .collection("Compte")
+                .add(Connexion)
+                .addOnCompleteListener(task -> {
+                    Toast.makeText(this, "Succes : " + task.isSuccessful(), Toast.LENGTH_LONG).show();
+                });
     }
 }

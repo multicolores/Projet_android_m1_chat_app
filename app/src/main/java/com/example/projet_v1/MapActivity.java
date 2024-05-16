@@ -12,13 +12,19 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.View;
+
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.views.overlay.Overlay;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -42,9 +48,6 @@ public class MapActivity extends AppCompatActivity {
             return insets;
         });
 
-       //Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
-
-
         setupMap();
     }
 
@@ -61,9 +64,10 @@ public class MapActivity extends AppCompatActivity {
         map.getController().setCenter(new GeoPoint(49.84526983293686, 3.2876876966705533));
         map.getController().setZoom(15);
 
-        // TODO - Set marker based on users list from DB
-        addMarker(map, 49.838762383443864, 3.2997569262111686, "Benois", Color.RED);
-        addMarker(map, 49.854778141717055, 3.2779157274471276, "Antoine", Color.BLUE);
+        // Set marker based on users list from DB
+        getUsersInfoFromDb();
+        //addMarker(map, 49.838762383443864, 3.2997569262111686, "Benois", Color.RED);
+        //addMarker(map, 49.854778141717055, 3.2779157274471276, "Antoine", Color.BLUE);
     }
 
     /**
@@ -113,4 +117,65 @@ public class MapActivity extends AppCompatActivity {
         double newLongitude = 3.2997569262111686;
         map.getController().setCenter(new GeoPoint(newLatitude, newLongitude));
     }
+
+    /**
+     * Remove all markers from the map
+     */
+    private void removeAllMarkers() {
+        for (Overlay overlay : map.getOverlays()) {
+            if (overlay instanceof Marker) {
+                map.getOverlays().remove(overlay);
+            }
+        }
+    }
+
+    /**
+     * Retrieves user information from the Firestore database and adds markers to the map based on the retrieved data.
+     * When DB data changes, update the map based on the new retrieved data.
+     * The markers represent the users on the map, and each marker's color is determined by the user's name.
+     */
+    private void getUsersInfoFromDb() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        CollectionReference usersCollection = db.collection("Compte");
+
+        usersCollection.addSnapshotListener((snapshot, e) -> {
+            if (e != null) {
+                Log.w("DB_LISTENER", "Error while listening database changes", e);
+                return;
+            }
+
+            // Remove old markers as modifications has been made in DB
+            removeAllMarkers();
+
+            for (DocumentSnapshot doc : snapshot) {
+                if (doc.exists()) {
+                    String userId = doc.getId();
+                    String nom = doc.getString("Nom");
+                    double latitude = doc.getDouble("Latitude");
+                    double longitude = doc.getDouble("Longitude");
+
+                    if (latitude != 0 || longitude != 0) {
+                        addMarker(map, latitude, longitude, nom, getColorForUser(nom));
+                    } else {
+                        Log.d("DB_LISTENER", "Latitude ou longitude manquante pour l'utilisateur avec ID: " + userId + "et nom: " + nom);
+                    }
+
+                } else {
+                    Log.d("DB_LISTENER", "Aucun utilisateur trouvé.");
+                }
+            }
+        });
+    }
+
+    /**
+     * Generates a color based on the user's name.
+     * The same name will always result in the same color.
+     */
+    private int getColorForUser(String userName) {
+        int hash = userName.hashCode();
+        hash = Math.abs(hash); // Ensure that the hash code is always positive
+        // Extract the least significant 3 bytes of the hash code and use them to generate an RGB color ( 0-255 )
+        return Color.rgb(hash & 0xFF, (hash >> 8) & 0xFF, (hash >> 16) & 0xFF);
+    }
+
 }

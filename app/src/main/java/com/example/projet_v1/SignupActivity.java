@@ -1,30 +1,20 @@
 package com.example.projet_v1;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
+
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.firebase.firestore.FirebaseFirestore;
-
-import org.w3c.dom.Text;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -83,7 +73,13 @@ public class SignupActivity extends AppCompatActivity {
                                         .set(CreationCompte)
                                         .addOnSuccessListener(unused -> {
                                             Toast.makeText(this, "Création du compte avec succès", Toast.LENGTH_LONG).show();
-                                            startActivity(new Intent(this, MapActivity.class));
+
+                                            Intent intentMap = new Intent(this, MapActivity.class);
+                                            intentMap.putExtra("Latitude", latitude);
+                                            intentMap.putExtra("Longitude", longitude);
+                                            intentMap.putExtra("Nom", Nom);
+                                            startActivity(intentMap);
+
                                         })
                                         .addOnFailureListener(e -> {
                                             Toast.makeText(this, "Échec de la création du compte", Toast.LENGTH_LONG).show();

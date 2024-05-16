@@ -1,6 +1,8 @@
 package com.example.projet_v1;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -10,6 +12,9 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -18,6 +23,7 @@ import android.view.View;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
@@ -27,13 +33,16 @@ import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-public class MapActivity extends AppCompatActivity {
+public class MapActivity extends AppCompatActivity implements LocationListener {
     private MapView map;
+    private LocationManager locationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +58,11 @@ public class MapActivity extends AppCompatActivity {
         });
 
         setupMap();
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 500, this);
     }
 
 
@@ -60,14 +74,16 @@ public class MapActivity extends AppCompatActivity {
     private void setupMap() {
         map = findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
-        // TODO - use user location
-        map.getController().setCenter(new GeoPoint(49.84526983293686, 3.2876876966705533));
-        map.getController().setZoom(15);
+
+        Intent intent = getIntent();
+        double latitude = intent.getDoubleExtra("Latitude", 0.0);
+        double longitude = intent.getDoubleExtra("Longitude", 0.0);
+
+        map.getController().setCenter(new GeoPoint(latitude, longitude));
+        map.getController().setZoom(10);
 
         // Set marker based on users list from DB
         getUsersInfoFromDb();
-        //addMarker(map, 49.838762383443864, 3.2997569262111686, "Benois", Color.RED);
-        //addMarker(map, 49.854778141717055, 3.2779157274471276, "Antoine", Color.BLUE);
     }
 
     /**
@@ -155,6 +171,7 @@ public class MapActivity extends AppCompatActivity {
                     double longitude = doc.getDouble("Longitude");
 
                     if (latitude != 0 || longitude != 0) {
+                        // TODO - créer liste de users à afficher en dessous de la map, quand on click dessus on peut zoom vers l’endroit grâce à la fonction onClickChangeView()
                         addMarker(map, latitude, longitude, nom, getColorForUser(nom));
                     } else {
                         Log.d("DB_LISTENER", "Latitude ou longitude manquante pour l'utilisateur avec ID: " + userId + "et nom: " + nom);
@@ -178,4 +195,42 @@ public class MapActivity extends AppCompatActivity {
         return Color.rgb(hash & 0xFF, (hash >> 8) & 0xFF, (hash >> 16) & 0xFF);
     }
 
+
+    /**
+     * Get location info from user
+     */
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+        double latitude = location.getLatitude();
+        double longitude = location.getLongitude();
+
+        Intent intent = getIntent();
+        double oldLatitude = intent.getDoubleExtra("Latitude", 0.0);
+        double oldLongitude = intent.getDoubleExtra("Longitude", 0.0);
+
+        if(oldLongitude != longitude || oldLatitude != latitude) {
+            updateLocationOfUserInDb(latitude, longitude, intent.getStringExtra("Nom"));
+        }
+    }
+
+    /**
+     * Update latitude and longitude values in DB for a user
+     */
+    private void updateLocationOfUserInDb(double latitude, double longitude, String nom) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        CollectionReference usersCollection = db.collection("Compte");
+
+        Query query = usersCollection.whereEqualTo("Nom", nom);
+        query.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                for (DocumentSnapshot document : task.getResult()) {
+                    document.getReference().update("Latitude", latitude, "Longitude", longitude)
+                            .addOnSuccessListener(aVoid -> Log.d("DB_UPDATE", "Location updated successfully for user: " + nom))
+                            .addOnFailureListener(e -> Log.w("DB_UPDATE", "Error updating location for user: " + nom, e));
+                }
+            } else {
+                Log.d("DB_UPDATE", "Error getting documents: ", task.getException());
+            }
+        });
+    }
 }

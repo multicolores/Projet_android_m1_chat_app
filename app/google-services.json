@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "269567857466",
+    "project_id": "locateappccm",
+    "storage_bucket": "locateappccm.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:269567857466:android:35736dc5ce37a2b06d3603",
+        "android_client_info": {
+          "package_name": "com.example.projet_v1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOasdqMsW-nx75dW79DSwdBwJl6AilDQQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

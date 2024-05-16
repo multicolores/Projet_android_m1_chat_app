@@ -58,7 +58,7 @@
             android:background="#ECECEC"
             android:ems="10"
             android:hint="Mot de passe"
-            android:inputType="text"
+            android:inputType="text|textPassword"
             android:paddingStart="15sp"
             android:paddingTop="10sp"
             android:paddingBottom="10sp" />
@@ -72,7 +72,7 @@
             android:onClick="OnClickSignup"
             android:paddingLeft="50sp"
             android:paddingRight="50sp"
-            android:text="Sign un" />
+            android:text="Sign up" />
 
         <TextView
             android:id="@+id/textView_VotrePosition"
@@ -80,7 +80,8 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="10sp"
             android:gravity="center_horizontal"
-            android:text="Votre potition actuelle :" />
+            android:text="Votre potition actuelle :"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textView_location_info"

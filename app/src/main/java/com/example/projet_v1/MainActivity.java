@@ -34,7 +34,6 @@ import java.util.concurrent.ExecutionException;
 public class MainActivity extends AppCompatActivity implements LocationListener {
     private static final int PERMISSION_REQUEST_CODE = 100;
     TextView textView;
-
     private double latitude;
     private double longitude;
     private LocationManager locationManager;
@@ -45,8 +44,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         this.BDD = FirebaseFirestore.getInstance();
-        Button SignIn = findViewById(R.id.Button_signin);
 
+        Button SignIn = findViewById(R.id.Button_signin);
         SignIn.setOnClickListener(View -> {
             EditText TextNom = findViewById(R.id.input_name);
             String Nom = TextNom.getText().toString();
@@ -57,25 +56,30 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             if (Nom.isEmpty() || Mdp.isEmpty()) {
                 Toast.makeText(this, "Remplissez le Nom et Mot de passe", Toast.LENGTH_SHORT).show();
             } else {
-                Map<String, Object> Connexion = new HashMap<>();
-                Connexion.put("Nom", Nom);
-                Connexion.put("MotDePasse", Mdp);
-
-                this.BDD
-                        .collection("Compte")
-                        .document(Nom)
-                        .set(Connexion)
-                        .addOnSuccessListener(unused -> {
-                            Toast.makeText(this, "Succes ", Toast.LENGTH_LONG).show();
+                BDD.collection("Compte").document(Nom).get()
+                        .addOnSuccessListener(documentSnapshot -> {
+                            if (documentSnapshot.exists()) {
+                                String storedPassword = documentSnapshot.getString("MotDePasse");
+                                if (storedPassword != null && storedPassword.equals(Mdp)) {
+                                    // Mot de passe correct
+                                    Toast.makeText(this, "Connexion réussie", Toast.LENGTH_SHORT).show();
+                                    startActivity(new Intent(this, MapActivity.class));
+                                } else {
+                                    // Mot de passe incorrect
+                                    Toast.makeText(this, "Mot de passe incorrect", Toast.LENGTH_SHORT).show();
+                                }
+                            } else {
+                                // Le compte n'existe pas
+                                Toast.makeText(this, "Le compte n'existe pas", Toast.LENGTH_SHORT).show();
+                            }
                         })
                         .addOnFailureListener(e -> {
-                            Toast.makeText(this, "Echec ", Toast.LENGTH_LONG).show();
+                            Toast.makeText(this, "Erreur lors de la vérification du compte", Toast.LENGTH_SHORT).show();
                         });
             }
         });
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        // Check if permissions are valids
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
                 PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -86,8 +90,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             return;
         }
 
-        // Get device location
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 500, this);
+
     }
 
     public void onClickGoMapPage(View view) {
@@ -123,7 +127,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         this.textView.setText("Latitude: " + latitude + "\nLongitude: " + longitude);
     }
 
-    // Other LocationListener methods
+    public void onClickSignupPage(View view) {
+        Intent intentSingUp = new Intent(this, SignupActivity.class);
+        intentSingUp.putExtra("Latitude", latitude);
+        intentSingUp.putExtra("Longitude", longitude);
+        startActivity(intentSingUp);
+    }
+
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {}
 
@@ -136,12 +146,5 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
         super.onPointerCaptureChanged(hasCapture);
-    }
-
-    public void onClickSignupPage(View view) {
-        Intent intentSingUp = new Intent(this, SignupActivity.class);
-        intentSingUp.putExtra("Latitude", latitude);
-        intentSingUp.putExtra("Longitude", longitude);
-        startActivity(intentSingUp);
     }
 }

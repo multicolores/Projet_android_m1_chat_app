@@ -7,11 +7,6 @@ import android.os.Bundle;
 
 import android.view.View;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import androidx.annotation.NonNull;
@@ -27,9 +22,6 @@ import android.location.LocationListener;
 import android.Manifest;
 import android.widget.Toast;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity implements LocationListener {
     private static final int PERMISSION_REQUEST_CODE = 100;
@@ -66,7 +58,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                                 if (storedPassword != null && storedPassword.equals(Mdp)) {
                                     // Mot de passe correct
                                     Toast.makeText(this, "Connexion réussie", Toast.LENGTH_SHORT).show();
-                                    startActivity(new Intent(this, MapActivity.class));
+
+                                    Intent intentMap = new Intent(this, MapActivity.class);
+                                    intentMap.putExtra("Latitude", latitude);
+                                    intentMap.putExtra("Longitude", longitude);
+                                    intentMap.putExtra("Nom", Nom);
+                                    startActivity(intentMap);
+
                                 } else {
                                     // Mot de passe incorrect
                                     Toast.makeText(this, "Mot de passe incorrect", Toast.LENGTH_SHORT).show();

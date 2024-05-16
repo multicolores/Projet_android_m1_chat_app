@@ -39,6 +39,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private LocationManager locationManager;
     private FirebaseFirestore BDD;
 
+    /**
+     * Initializes the activity, requests location permissions, and starts location updates.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         });
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
+        // Check if permissions ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION are not granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
                 PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -87,22 +91,23 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
                     PERMISSION_REQUEST_CODE);
-            return;
+        } else {
+            // Get device location if permissions are granted
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 500, this);
         }
-
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 500, this);
-
     }
 
     public void onClickGoMapPage(View view) {
         startActivity(new Intent(this, MapActivity.class));
     }
 
-    @Override
-    public void onFlushComplete(int requestCode) {
-        LocationListener.super.onFlushComplete(requestCode);
-    }
 
+    /**
+     * Handles the request permission result from the user.
+     * @param requestCode The request code for the permission request.
+     * @param permissions The requested permissions.
+     * @param grantResults The grant results for the permissions.
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -111,13 +116,17 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     return;
                 }
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+                // Get device location if permissions are granted
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 500, this);
             } else {
-                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Permission denied, can't access location", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
+    /**
+     * Get location info from user
+     */
     @Override
     public void onLocationChanged(@NonNull Location location) {
          latitude = location.getLatitude();
@@ -142,9 +151,4 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     @Override
     public void onProviderDisabled(String provider) {}
-
-    @Override
-    public void onPointerCaptureChanged(boolean hasCapture) {
-        super.onPointerCaptureChanged(hasCapture);
-    }
 }

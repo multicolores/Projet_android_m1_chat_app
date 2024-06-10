@@ -17,8 +17,10 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -35,14 +37,30 @@ import org.osmdroid.views.overlay.Overlay;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class MapActivity extends AppCompatActivity implements LocationListener {
     private MapView map;
     private LocationManager locationManager;
+    private RecyclerView recyclerView;
+    private UserAdapter userAdapter;
+    private ArrayList<User> userList = new ArrayList<>();
+
+    private double latitude;
+    private double longitude;
+    private boolean isAscending = true; // Variable pour suivre l'état du tri
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,12 +76,16 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         });
 
         setupMap();
+        setupRecyclerView();
+
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 500, this);
     }
+
 
 
     /**
@@ -76,31 +98,55 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         map.setTileSource(TileSourceFactory.MAPNIK);
 
         Intent intent = getIntent();
-        double latitude = intent.getDoubleExtra("Latitude", 0.0);
-        double longitude = intent.getDoubleExtra("Longitude", 0.0);
+        latitude = intent.getDoubleExtra("Latitude", 0.0);
+        longitude = intent.getDoubleExtra("Longitude", 0.0);
 
         map.getController().setCenter(new GeoPoint(latitude, longitude));
-        map.getController().setZoom(10);
+        map.getController().setZoom(5);
 
         // Set marker based on users list from DB
         getUsersInfoFromDb();
     }
 
+
+    /**
+     * Initialise et configure le RecyclerView pour afficher les utilisateurs.
+     */
+    private void setupRecyclerView() {
+
+        // Retrieve layout
+        recyclerView = findViewById(R.id.recyclerView);
+
+        // Create and configure  LinearLayoutManager for the RecyclerView
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        recyclerView.setLayoutManager(layoutManager);
+
+        // Initialize adaptater for RecyclerView
+        userAdapter = new UserAdapter(this, userList, user -> {
+            // Zoom and center map on selected user
+            map.getController().setZoom(10);
+            map.getController().setCenter(new GeoPoint(user.getLatitude(), user.getLongitude()));
+        });
+        recyclerView.setAdapter(userAdapter); // Set adaptateur to RecyclerView
+    }
+
     /**
      * Adds a custom marker to the map.
      * The marker style is based on custom_marker.png and has a custom color
-     * @param map The MapView to which the marker will be added.
-     * @param latitude Latitude of the marker.
+     *
+     * @param map       The MapView to which the marker will be added.
+     * @param latitude  Latitude of the marker.
      * @param longitude Longitude of the marker.
-     * @param text Text associated with the marker.
-     * @param color Color of the marker.
+     * @param text      Text associated with the marker.
+     * @param color     Color of the marker.
      */
     private void addMarker(MapView map, double latitude, double longitude, String text, int color) {
         Marker marker = new Marker(map);
         marker.setPosition(new GeoPoint(latitude, longitude));
 
         Bitmap markerBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.custom_marker);
-        if(markerBitmap!=null) {
+        if (markerBitmap != null) {
             markerBitmap = Bitmap.createScaledBitmap(markerBitmap, 120, 120, false);
             markerBitmap = tintBitmap(markerBitmap, color);
             Drawable drawable = new BitmapDrawable(getResources(), markerBitmap);
@@ -127,11 +173,8 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
      * Method called to update the zoom level and the location displayed on the map matching a selected user
      */
     public void onClickChangeView(View view) {
-        map.getController().setZoom(18);
-
-        double newLatitude = 49.838762383443864;
-        double newLongitude = 3.2997569262111686;
-        map.getController().setCenter(new GeoPoint(newLatitude, newLongitude));
+        map.getController().setZoom(15);
+        map.getController().setCenter(new GeoPoint(latitude, longitude));
     }
 
     /**
@@ -145,14 +188,19 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         }
     }
 
+
     /**
      * Retrieves user information from the Firestore database and adds markers to the map based on the retrieved data.
      * When DB data changes, update the map based on the new retrieved data.
      * The markers represent the users on the map, and each marker's color is determined by the user's name.
      */
-    private void getUsersInfoFromDb() {
+    private void    getUsersInfoFromDb() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         CollectionReference usersCollection = db.collection("Compte");
+
+
+        // Retrieve current User name
+        String currentUserName = getIntent().getStringExtra("Nom");
 
         usersCollection.addSnapshotListener((snapshot, e) -> {
             if (e != null) {
@@ -163,16 +211,33 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
             // Remove old markers as modifications has been made in DB
             removeAllMarkers();
 
+            userList.clear();
+
+            // Add marker for the currently logged in user
+            //addMarker(map, latitude, longitude, currentUserName, getColorForUser(currentUserName));
+
+
             for (DocumentSnapshot doc : snapshot) {
                 if (doc.exists()) {
                     String userId = doc.getId();
                     String nom = doc.getString("Nom");
-                    double latitude = doc.getDouble("Latitude");
-                    double longitude = doc.getDouble("Longitude");
+                    double userLatitude = doc.getDouble("Latitude");
+                    double userLongitude = doc.getDouble("Longitude");
 
-                    if (latitude != 0 || longitude != 0) {
-                        // TODO - créer liste de users à afficher en dessous de la map, quand on click dessus on peut zoom vers l’endroit grâce à la fonction onClickChangeView()
-                        addMarker(map, latitude, longitude, nom, getColorForUser(nom));
+                    if (userLatitude != 0 && userLongitude != 0) {
+                        // Calculates the distance between the current user and this user
+                        double distance = calculateDistance(latitude, longitude, userLatitude, userLongitude);
+
+
+                        if(!nom.equals(currentUserName)){
+                            // Adds the user to the list with the information retrieved
+                            userList.add(new User(nom, userLatitude, userLongitude, distance));
+
+                        }
+
+                        // Adds a marker to the map for this user
+                        addMarker(map, userLatitude, userLongitude, nom, getColorForUser(nom));
+
                     } else {
                         Log.d("DB_LISTENER", "Latitude ou longitude manquante pour l'utilisateur avec ID: " + userId + "et nom: " + nom);
                     }
@@ -180,9 +245,15 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
                 } else {
                     Log.d("DB_LISTENER", "Aucun utilisateur trouvé.");
                 }
+
             }
+
+            // Notify adapter of changes
+            userAdapter.notifyDataSetChanged();
+
         });
     }
+
 
     /**
      * Generates a color based on the user's name.
@@ -201,17 +272,64 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
      */
     @Override
     public void onLocationChanged(@NonNull Location location) {
-        double latitude = location.getLatitude();
-        double longitude = location.getLongitude();
+        latitude = location.getLatitude();
+        longitude = location.getLongitude();
 
-        Intent intent = getIntent();
-        double oldLatitude = intent.getDoubleExtra("Latitude", 0.0);
-        double oldLongitude = intent.getDoubleExtra("Longitude", 0.0);
-
-        if(oldLongitude != longitude || oldLatitude != latitude) {
-            updateLocationOfUserInDb(latitude, longitude, intent.getStringExtra("Nom"));
-        }
+        // Mettre à jour les coordonnées de l'utilisateur dans la base de données
+        updateLocationOfUserInDb(latitude, longitude, getIntent().getStringExtra("Nom"));
     }
+
+
+    /**
+     * Sorts the list of users by distance when the user clicks on the sort button.
+     * @param view
+     */
+    public void onSortByDistanceClicked(View view) {
+        // Sort user list by distance
+        if (isAscending) {
+            Collections.sort(userList, new Comparator<User>() {
+                @Override
+                public int compare(User user1, User user2) {
+                    return Double.compare(user1.getDistance(), user2.getDistance());
+                }
+            });
+        } else {
+            Collections.sort(userList, new Comparator<User>() {
+                @Override
+                public int compare(User user1, User user2) {
+                    return Double.compare(user2.getDistance(), user1.getDistance());
+                }
+            });
+        }
+
+        // Inverts sort status for next click
+        isAscending = !isAscending;
+
+        // Notify adapter of changes
+        userAdapter.notifyDataSetChanged();
+    }
+
+
+    /**
+     * Calculate the distance between two geographical points using Haversine's formula.
+     *
+     * @param lat1 Latitude of the first point
+     * @param lon1 Longitude of first point
+     * @param lat2 Latitude of the second point
+     * @param lon2 Longitude of second point
+     * @return Distance between the two points in kilometers
+     */
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        double earthRadius = 6371; // Earth's radius in kilometers
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return earthRadius * c;
+    }
+
 
     /**
      * Update latitude and longitude values in DB for a user
@@ -219,6 +337,7 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
     private void updateLocationOfUserInDb(double latitude, double longitude, String nom) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         CollectionReference usersCollection = db.collection("Compte");
+
 
         Query query = usersCollection.whereEqualTo("Nom", nom);
         query.get().addOnCompleteListener(task -> {
@@ -228,9 +347,13 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
                             .addOnSuccessListener(aVoid -> Log.d("DB_UPDATE", "Location updated successfully for user: " + nom))
                             .addOnFailureListener(e -> Log.w("DB_UPDATE", "Error updating location for user: " + nom, e));
                 }
+                getUsersInfoFromDb();
+
+
             } else {
                 Log.d("DB_UPDATE", "Error getting documents: ", task.getException());
             }
         });
     }
+
 }

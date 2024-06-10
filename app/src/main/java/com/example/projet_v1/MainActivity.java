@@ -95,11 +95,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         }
     }
 
-    public void onClickGoMapPage(View view) {
-        startActivity(new Intent(this, MapActivity.class));
-    }
-
-
     /**
      * Handles the request permission result from the user.
      * @param requestCode The request code for the permission request.
@@ -149,4 +144,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     @Override
     public void onProviderDisabled(String provider) {}
+
+
 }

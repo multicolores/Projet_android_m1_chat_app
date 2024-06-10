@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Projet_v1</string>
+    <string name="string_distance">Distance</string>
+    <string name="string_name">Name</string>
+    <string name="string_position">My Position</string>
 </resources>

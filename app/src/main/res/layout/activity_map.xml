@@ -4,41 +4,84 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    app:circularflow_angles="100"
     tools:context=".MapActivity">
+
 
     <Button
         android:id="@+id/button3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="29dp"
-        android:layout_marginBottom="95dp"
+        android:layout_marginBottom="16dp"
         android:onClick="onClickChangeView"
-        android:text="Button"
+        android:text="@string/string_position"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_block" />
+        app:layout_constraintTop_toBottomOf="@+id/recyclerView" />
 
     <TextView
         android:id="@+id/text_block"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="37dp"
-        android:background="#FFFFFF"
+        android:layout_height="49dp"
+        android:layout_marginTop="293dp"
+        android:layout_marginEnd="3dp"
+        android:layout_marginBottom="293dp"
+        android:onClick="onSortByNameClicked"
         android:padding="16dp"
-        android:text="Votre texte ici"
+        android:text="Liste des utilisateurs"
+        android:textAllCaps="true"
         android:textColor="#000000"
-        app:layout_constraintBottom_toTopOf="@+id/button3"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/recyclerView"
+        app:layout_constraintEnd_toStartOf="@+id/btnSortByDistance"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <TextView
+        android:id="@+id/btnSortByDistance"
+        android:layout_width="0dp"
+        android:layout_height="49dp"
+        android:onClick="onSortByDistanceClicked"
+        android:padding="16dp"
+        android:text="@string/string_distance"
+        android:textAlignment="textEnd"
+        android:textAllCaps="true"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/recyclerView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/text_block"
         app:layout_constraintTop_toBottomOf="@+id/map" />
 
     <org.osmdroid.views.MapView
         android:id="@+id/map"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/text_block"
+        app:layout_constraintBottom_toTopOf="@+id/btnSortByDistance"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+
+    </org.osmdroid.views.MapView>
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="32dp"
+        app:layout_constraintBottom_toTopOf="@+id/button3"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnSortByDistance">
+
+    </androidx.recyclerview.widget.RecyclerView>
+
+    <!-- Bouton ou TextView pour le nom de l'utilisateur -->
+
+    <!-- Bouton ou TextView pour la distance -->
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

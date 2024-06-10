@@ -95,14 +95,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         }
     }
 
-    public void onClickGoMapPage(View view) {
-        Intent intentMap = new Intent(this, MapActivity.class);
-        intentMap.putExtra("Latitude", latitude);
-        intentMap.putExtra("Longitude", longitude);
-        startActivity(new Intent(this, MapActivity.class));
-    }
-
-
     /**
      * Handles the request permission result from the user.
      * @param requestCode The request code for the permission request.

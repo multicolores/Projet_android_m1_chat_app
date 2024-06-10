@@ -189,13 +189,12 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
     }
 
 
-
     /**
      * Retrieves user information from the Firestore database and adds markers to the map based on the retrieved data.
      * When DB data changes, update the map based on the new retrieved data.
      * The markers represent the users on the map, and each marker's color is determined by the user's name.
      */
-    private void getUsersInfoFromDb() {
+    private void    getUsersInfoFromDb() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         CollectionReference usersCollection = db.collection("Compte");
 
@@ -212,8 +211,10 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
             // Remove old markers as modifications has been made in DB
             removeAllMarkers();
 
+            userList.clear();
+
             // Add marker for the currently logged in user
-            addMarker(map, latitude, longitude, currentUserName, getColorForUser(currentUserName));
+            //addMarker(map, latitude, longitude, currentUserName, getColorForUser(currentUserName));
 
 
             for (DocumentSnapshot doc : snapshot) {
@@ -223,15 +224,20 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
                     double userLatitude = doc.getDouble("Latitude");
                     double userLongitude = doc.getDouble("Longitude");
 
-                    if (!nom.equals(currentUserName) && userLatitude != 0 && userLongitude != 0) {
+                    if (userLatitude != 0 && userLongitude != 0) {
                         // Calculates the distance between the current user and this user
                         double distance = calculateDistance(latitude, longitude, userLatitude, userLongitude);
 
-                        // Adds the user to the list with the information retrieved
-                        userList.add(new User(nom, userLatitude, userLongitude, distance));
+
+                        if(!nom.equals(currentUserName)){
+                            // Adds the user to the list with the information retrieved
+                            userList.add(new User(nom, userLatitude, userLongitude, distance));
+
+                        }
 
                         // Adds a marker to the map for this user
                         addMarker(map, userLatitude, userLongitude, nom, getColorForUser(nom));
+
                     } else {
                         Log.d("DB_LISTENER", "Latitude ou longitude manquante pour l'utilisateur avec ID: " + userId + "et nom: " + nom);
                     }
@@ -249,9 +255,6 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
     }
 
 
-
-
-
     /**
      * Generates a color based on the user's name.
      * The same name will always result in the same color.
@@ -264,18 +267,16 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
     }
 
 
-
     /**
      * Get location info from user
      */
     @Override
     public void onLocationChanged(@NonNull Location location) {
-        double latitude = location.getLatitude();
-        double longitude = location.getLongitude();
+        latitude = location.getLatitude();
+        longitude = location.getLongitude();
 
         // Mettre à jour les coordonnées de l'utilisateur dans la base de données
         updateLocationOfUserInDb(latitude, longitude, getIntent().getStringExtra("Nom"));
-        Log.d("Changement Pos","quand");
     }
 
 
@@ -337,6 +338,7 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         CollectionReference usersCollection = db.collection("Compte");
 
+
         Query query = usersCollection.whereEqualTo("Nom", nom);
         query.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
@@ -345,6 +347,9 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
                             .addOnSuccessListener(aVoid -> Log.d("DB_UPDATE", "Location updated successfully for user: " + nom))
                             .addOnFailureListener(e -> Log.w("DB_UPDATE", "Error updating location for user: " + nom, e));
                 }
+                getUsersInfoFromDb();
+
+
             } else {
                 Log.d("DB_UPDATE", "Error getting documents: ", task.getException());
             }

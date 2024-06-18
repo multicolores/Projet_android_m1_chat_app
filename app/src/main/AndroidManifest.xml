@@ -21,9 +21,6 @@
             android:name=".SignupActivity"
             android:exported="false" />
         <activity
-            android:name=".RegisterActivity"
-            android:exported="false" />
-        <activity
             android:name=".MapActivity"
             android:exported="false" />
         <activity
